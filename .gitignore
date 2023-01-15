@@ -1,0 +1,14 @@
+#ignore .venv
+*.venv
+
+#ignore dist/
+dist/
+
+#ignore __pycache__
+__pycache__
+
+#ignore coverage.xml
+*.xml
+
+#ignore .coverage
+*.coverage
