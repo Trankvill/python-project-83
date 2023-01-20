@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-lg mt-3">
+      <h1>Сайты</h1>
+<div class="table-responsive">
+  <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+    <tbody>
+      <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Последняя проверка</th>
+        <th>Код ответа</th>
+      </tr>
+{% for s in site %}
+        <tr>
+          <td>{{s[0]}}</td>
+          <td>
+            <a href="{{url_for('show_url', id=s[0])}}">
+              {{s[1]}}
+            </a>
+          </td>
+          <td>
+              {{s[2]}}
+          </td>
+          <td>
+              {{s[3]}}
+          </td>
+        </tr>
+{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+    </div>
+{% endblock %}

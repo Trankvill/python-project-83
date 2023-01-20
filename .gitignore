@@ -12,3 +12,6 @@ __pycache__
 
 #ignore .coverage
 *.coverage
+
+#ignore .env
+*.env
