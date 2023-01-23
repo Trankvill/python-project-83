@@ -1,50 +1,53 @@
-import psycopg2
-import os
-import validators
-import datetime
 import requests
 from bs4 import BeautifulSoup
 from flask import (
     Flask, render_template,
     request, redirect,
-    flash, get_flashed_messages,
+    flash,
     url_for)
 from dotenv import load_dotenv
+import psycopg2
+import os
+import validators
+import datetime
 
 
+# Connect to your postgres DB
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 conn = psycopg2.connect(DATABASE_URL)
 conn.autocommit = True
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
+app.secret_key = SECRET_KEY
 
 
-@app.route('/')
+@app.get('/')
 def index():
-    messages = get_flashed_messages()
     return render_template(
         'home.html',
         title='Анализатор страниц',
-        messages=messages
     )
 
 
-@app.post('/urls/add')
+@app.post('/urls')
 def urls_add():
     dt = datetime.datetime.now()
     form = request.form.to_dict()
     valid_url = validators.url(form['url'])
+    # Если это url
     if valid_url and len(form['url']) <= 255:
         cur = conn.cursor()
+        # Смотрим похожее имя в БД
         cur.execute('SELECT id FROM urls WHERE name=(%s);',
                     (form['url'],))
         id_find = cur.fetchone()
         cur.close()
-        print(id_find)
+        # Если такая запись в БД уже есть
         if id_find:
-            flash('Такой сайт уже есть')
+            flash('Страница уже существует', 'success')
             return redirect(url_for('show_url', id=id_find[0]))
+            # Продолжаем если в базе записи нет
         cur = conn.cursor()
         cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s);",
                     (form['url'], dt))
@@ -52,13 +55,16 @@ def urls_add():
                     (form['url'],))
         id_find = cur.fetchone()
         cur.close()
-        flash('Страница успешно добавлена')
+        flash('Страница успешно добавлена', 'success')
         return redirect(url_for('show_url', id=id_find[0]))
-    flash('Не верный URL')
-    return redirect(url_for('index'))
+    else:
+        flash('Некорректный URL', 'danger')
+        return render_template('home.html',
+                               title='Анализатор страниц',
+                               ), 422
 
 
-@app.get('/urls/')
+@app.get('/urls')
 def get_urls():
     cur = conn.cursor()
     cur.execute('SELECT urls.id, urls.name,'
@@ -76,7 +82,7 @@ def get_urls():
                            )
 
 
-@app.get('/urls/<int:id>/')
+@app.get('/urls/<int:id>')
 def show_url(id):
     cur = conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id=(%s);',
@@ -87,11 +93,9 @@ def show_url(id):
                 (id,))
     site2 = cur.fetchall()
     cur.close()
-    messages = get_flashed_messages()
     return render_template('show_url.html',
                            site=site,
                            site2=site2,
-                           messages=messages
                            )
 
 
@@ -105,6 +109,7 @@ def urls_id_checks_post(id):
         site = cur.fetchone()
         r = requests.get(site[0])
         code = r.status_code
+        r.raise_for_status()
         html = r.text
         soup = BeautifulSoup(html, 'html.parser')
         tag = {'h1': ' ',
@@ -123,8 +128,9 @@ def urls_id_checks_post(id):
                     'VALUES ((%s), (%s), (%s), (%s), (%s), (%s));',
                     (id, dt, code, tag['h1'], tag['meta'], tag['title']))
         cur.close()
-        flash('Страница успешно проверена')
+        flash('Страница успешно проверена', 'success')
         return redirect(url_for('show_url', id=id))
-    except requests.exceptions.RequestException:
-        flash('Произошла ошибка при проверке')
+    except requests.exceptions.HTTPError:
+        flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('show_url', id=id))
+
