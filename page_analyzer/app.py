@@ -7,10 +7,10 @@ from flask import (
     request, redirect,
     flash, get_flashed_messages,
     url_for)
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
 
-dotenv_values()
+load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 conn = psycopg2.connect(DATABASE_URL)
 conn.autocommit = True
