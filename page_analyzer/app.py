@@ -2,6 +2,8 @@ import psycopg2
 import os
 import validators
 import datetime
+import requests
+from bs4 import BeautifulSoup
 from flask import (
     Flask, render_template,
     request, redirect,
@@ -15,7 +17,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 conn = psycopg2.connect(DATABASE_URL)
 conn.autocommit = True
 app = Flask(__name__)
-app.secret_key = '403f767f226a40b38cf761620036d6c7'
+app.secret_key = os.getenv('SECRET_KEY')
 
 
 @app.route('/')
@@ -59,7 +61,9 @@ def urls_add():
 @app.get('/urls/')
 def get_urls():
     cur = conn.cursor()
-    cur.execute('SELECT urls.id, urls.name, MAX(url_checks.created_at) '
+    cur.execute('SELECT urls.id, urls.name,'
+                'MAX(url_checks.created_at), '
+                'MAX(url_checks.status_code) '
                 'FROM urls '
                 'LEFT JOIN url_checks '
                 'ON urls.id = url_checks.url_id '
@@ -78,7 +82,8 @@ def show_url(id):
     cur.execute('SELECT * FROM urls WHERE id=(%s);',
                 (id,))
     site = cur.fetchone()
-    cur.execute('SELECT * FROM url_checks WHERE url_id = (%s);',
+    cur.execute('SELECT * FROM url_checks WHERE url_id = (%s)'
+                'ORDER BY created_at DESC;',
                 (id,))
     site2 = cur.fetchall()
     cur.close()
@@ -92,11 +97,34 @@ def show_url(id):
 
 @app.post('/urls/<int:id>/checks')
 def urls_id_checks_post(id):
-    dt = datetime.datetime.now()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO url_checks (url_id, created_at) '
-                'VALUES ((%s), (%s));',
-                (id, dt))
-    cur.close()
-    flash('Страница успешно проверена')
-    return redirect(url_for('show_url', id=id))
+    try:
+        dt = datetime.datetime.now()
+        cur = conn.cursor()
+        cur.execute('SELECT name FROM urls WHERE id=(%s);',
+                    (id,))
+        site = cur.fetchone()
+        r = requests.get(site[0])
+        code = r.status_code
+        html = r.text
+        soup = BeautifulSoup(html, 'html.parser')
+        tag = {'h1': ' ',
+               'title': ' ',
+               'meta': ' '
+               }
+        for t in tag:
+            if soup.find(t) is not None:
+                if t == 'meta' and soup.find('meta').get('content') is not None:
+                    tag['meta'] = soup.find('meta').get('content')
+                    break
+                tag[t] = soup.find(t).text
+        cur = conn.cursor()
+        cur.execute('INSERT INTO url_checks (url_id,'
+                    'created_at, status_code, h1, description, title) '
+                    'VALUES ((%s), (%s), (%s), (%s), (%s), (%s));',
+                    (id, dt, code, tag['h1'], tag['meta'], tag['title']))
+        cur.close()
+        flash('Страница успешно проверена')
+        return redirect(url_for('show_url', id=id))
+    except requests.exceptions.RequestException:
+        flash('Произошла ошибка при проверке')
+        return redirect(url_for('show_url', id=id))
