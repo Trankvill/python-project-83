@@ -12,3 +12,4 @@ CREATE TABLE IF NOT EXISTS url_checks (
         description text,
         created_at date
         );
+
