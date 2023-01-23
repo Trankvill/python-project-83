@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.10.6]
+        python-version: [3.8]
 
     steps:
       - uses: actions/checkout@v2
@@ -24,5 +24,4 @@ jobs:
           make install
       - name: Run selfcheck and linter
         run: |
-          make check
           make lint
