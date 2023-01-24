@@ -113,7 +113,7 @@ def urls_id_checks_post(id):
                }
         for t in tag:
             if soup.find(t) is not None:
-                if t == 'meta' and soup.find('meta').get('content') is not None:
+                if t == 'meta' and soup.find('meta').get('content') is not None:  # noqa: Е501
                     tag['meta'] = soup.find('meta').get('content')
                     break
                 tag[t] = soup.find(t).text
@@ -128,4 +128,3 @@ def urls_id_checks_post(id):
     except requests.exceptions.HTTPError:
         flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('show_url', id=id))
-
