@@ -11,9 +11,6 @@ build:
 dev:
 	poetry run flask --app page_analyzer:app run
 
-build:
-	poetry build
-
 package-install:
 	python3 -m pip install --user dist/*.whl
 
