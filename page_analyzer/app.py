@@ -1,3 +1,7 @@
+import psycopg2
+import os
+import validators
+import datetime
 import requests
 from bs4 import BeautifulSoup
 from flask import (
@@ -6,13 +10,8 @@ from flask import (
     flash,
     url_for)
 from dotenv import load_dotenv
-import psycopg2
-import os
-import validators
-import datetime
 
 
-# Connect to your postgres DB
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 conn = psycopg2.connect(DATABASE_URL)
@@ -35,19 +34,15 @@ def urls_add():
     dt = datetime.datetime.now()
     form = request.form.to_dict()
     valid_url = validators.url(form['url'])
-    # Если это url
     if valid_url and len(form['url']) <= 255:
         cur = conn.cursor()
-        # Смотрим похожее имя в БД
         cur.execute('SELECT id FROM urls WHERE name=(%s);',
                     (form['url'],))
         id_find = cur.fetchone()
         cur.close()
-        # Если такая запись в БД уже есть
         if id_find:
             flash('Страница уже существует', 'success')
             return redirect(url_for('show_url', id=id_find[0]))
-            # Продолжаем если в базе записи нет
         cur = conn.cursor()
         cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s);",
                     (form['url'], dt))
