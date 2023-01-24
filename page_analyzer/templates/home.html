@@ -2,13 +2,13 @@
 {% block content %}
     {% for category, msg in get_flashed_messages(with_categories=True) %}
         {% if category %}
-            <div class="alert alert-{{ category }}" role="alert">{{msg}}</div>
+            <div class="alert alert-{{ category }}" role="alert">{{ msg }}</div>
         {%  endif %}
   {% endfor %}
     <div class="container-lg mt-3">
         <div class="row">
             <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
-                <h1 class="display-3">{{title}}</h1>
+                <h1 class="display-3">{{ title }}</h1>
                 <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
                 <form action="{{ url_for('urls_add') }}" method="post" class="d-flex justify-content-center" required="">
                 <input type="text" name="url" placeholder="https://www.example.com" value="" class="form-control form-control-lg">
