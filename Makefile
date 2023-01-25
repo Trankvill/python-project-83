@@ -16,3 +16,6 @@ package-install:
 
 lint:
 	poetry run flake8 page_analyzer
+
+check:
+	poetry check
