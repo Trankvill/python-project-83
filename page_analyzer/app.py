@@ -13,11 +13,14 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
+
 DATABASE_URL = os.getenv('DATABASE_URL')
+SECRET_KEY = os.getenv('SECRET_KEY')
+
 conn = psycopg2.connect(DATABASE_URL)
 conn.autocommit = True
 app = Flask(__name__)
-SECRET_KEY = os.getenv('SECRET_KEY')
+
 app.secret_key = SECRET_KEY
 
 
