@@ -89,13 +89,9 @@ def show_url(id):
 
 @app.post('/urls/<int:id>/checks')
 def create_check(id):
-    conn = db.connect_to_db()
     try:
         dt = datetime.datetime.now()
-        cur = conn.cursor()
-        cur.execute('SELECT name FROM urls WHERE id=(%s);',
-                    (id,))
-        site = cur.fetchone()
+        site = db.get_queries_for_site_check(id)
         code, soup = get_html(site)
         tag = {'h1': ' ',
                'title': ' ',
@@ -107,13 +103,7 @@ def create_check(id):
                     tag['meta'] = soup.find('meta').get('content')
                     break
                 tag[t] = soup.find(t).text
-        cur = conn.cursor()
-        cur.execute('INSERT INTO url_checks (url_id,'
-                    'created_at, status_code, h1, description, title) '
-                    'VALUES ((%s), (%s), (%s), (%s), (%s), (%s));',
-                    (id, dt, code, tag['h1'], tag['meta'], tag['title']))
-        conn.commit()
-        cur.close()
+        db.get_queries_for_check(id, dt, code, tag)
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('show_url', id=id))
     except requests.exceptions.HTTPError:
