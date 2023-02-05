@@ -42,3 +42,23 @@ def get_queries_for_show_url(id):
     conn.commit()
     cur.close()
     return site, site2
+
+
+def get_queries_for_site_check(id):
+    conn = connect_to_db()
+    cur = conn.cursor()
+    cur.execute('SELECT name FROM urls WHERE id=(%s);',
+                (id,))
+    site = cur.fetchone()
+    return site
+
+
+def get_queries_for_check(id, dt, code, tag):
+    conn = connect_to_db()
+    cur = conn.cursor()
+    cur.execute('INSERT INTO url_checks (url_id,'
+                'created_at, status_code, h1, description, title) '
+                'VALUES ((%s), (%s), (%s), (%s), (%s), (%s));',
+                (id, dt, code, tag['h1'], tag['meta'], tag['title']))
+    conn.commit()
+    cur.close()
