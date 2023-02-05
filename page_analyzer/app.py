@@ -80,17 +80,7 @@ def get_urls():
 
 @app.get('/urls/<int:id>')
 def show_url(id):
-    conn = db.connect_to_db()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM urls WHERE id=(%s);',
-                (id,))
-    site = cur.fetchone()
-    cur.execute('SELECT * FROM url_checks WHERE url_id = (%s)'
-                'ORDER BY created_at DESC;',
-                (id,))
-    site2 = cur.fetchall()
-    conn.commit()
-    cur.close()
+    site, site2 = db.get_queries_for_show_url(id)
     return render_template('show_url.html',
                            site=site,
                            site2=site2,
