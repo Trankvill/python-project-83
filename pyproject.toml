@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hexlet-code"
-version = "0.4.5"
+version = "0.4.9"
 description = "Python page analyzer"
 authors = ["Konstantin Chupin <chupin.k@yandex.ru>"]
 packages = [
