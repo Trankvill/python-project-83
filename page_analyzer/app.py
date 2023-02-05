@@ -24,6 +24,15 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
 
+def get_html(site):
+    r = requests.get(site[0])
+    code = r.status_code
+    r.raise_for_status()
+    html = r.text
+    soup = BeautifulSoup(html, 'html.parser')
+    return code, soup
+
+
 @app.get('/')
 def index():
     return render_template(
@@ -33,7 +42,7 @@ def index():
 
 
 @app.post('/urls')
-def urls_add():
+def create_url():
     dt = datetime.datetime.now()
     form = request.form.to_dict()
     valid_url = validators.url(form['url'])
@@ -98,18 +107,14 @@ def show_url(id):
 
 
 @app.post('/urls/<int:id>/checks')
-def urls_id_checks_post(id):
+def create_check(id):
     try:
         dt = datetime.datetime.now()
         cur = conn.cursor()
         cur.execute('SELECT name FROM urls WHERE id=(%s);',
                     (id,))
         site = cur.fetchone()
-        r = requests.get(site[0])
-        code = r.status_code
-        r.raise_for_status()
-        html = r.text
-        soup = BeautifulSoup(html, 'html.parser')
+        code, soup = get_html(site)
         tag = {'h1': ' ',
                'title': ' ',
                'meta': ' '
