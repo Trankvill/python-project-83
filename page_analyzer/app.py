@@ -40,27 +40,15 @@ def index():
 
 @app.post('/urls')
 def create_url():
-    conn = db.connect_to_db()
     dt = datetime.datetime.now()
     form = request.form.to_dict()
     valid_url = validators.url(form['url'])
     if valid_url and len(form['url']) <= 255:
-        cur = conn.cursor()
-        cur.execute('SELECT id FROM urls WHERE name=(%s);',
-                    (form['url'],))
-        id_find = cur.fetchone()
-        cur.close()
+        id_find = db.get_queries_for_create_url_exist(dt, form)
         if id_find:
             flash('Страница уже существует', 'success')
             return redirect(url_for('show_url', id=id_find[0]))
-        cur = conn.cursor()
-        cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s);",
-                    (form['url'], dt))
-        cur.execute('SELECT id FROM urls WHERE name=(%s);',
-                    (form['url'],))
-        id_find = cur.fetchone()
-        conn.commit()
-        cur.close()
+        id_find = db.get_queries_for_create_url_not_exist(dt, form)
         flash('Страница успешно добавлена', 'success')
         return redirect(url_for('show_url', id=id_find[0]))
     else:
