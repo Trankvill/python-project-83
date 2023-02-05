@@ -1,8 +1,8 @@
-import psycopg2
 import os
 import validators
 import datetime
 import requests
+import page_analyzer.db as db
 from bs4 import BeautifulSoup
 from flask import (
     Flask, render_template,
@@ -14,10 +14,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-conn = psycopg2.connect(DATABASE_URL)
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -42,6 +40,7 @@ def index():
 
 @app.post('/urls')
 def create_url():
+    conn = db.connect_to_db()
     dt = datetime.datetime.now()
     form = request.form.to_dict()
     valid_url = validators.url(form['url'])
@@ -73,18 +72,7 @@ def create_url():
 
 @app.get('/urls')
 def get_urls():
-    cur = conn.cursor()
-    cur.execute('SELECT urls.id, urls.name,'
-                'MAX(url_checks.created_at), '
-                'MAX(url_checks.status_code) '
-                'FROM urls '
-                'LEFT JOIN url_checks '
-                'ON urls.id = url_checks.url_id '
-                'GROUP BY urls.id '
-                'ORDER BY urls.id ASC')
-    site = cur.fetchall()
-    conn.commit()
-    cur.close()
+    site = db.get_queries_for_urls()
     return render_template('urls.html',
                            site=site
                            )
@@ -92,6 +80,7 @@ def get_urls():
 
 @app.get('/urls/<int:id>')
 def show_url(id):
+    conn = db.connect_to_db()
     cur = conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id=(%s);',
                 (id,))
@@ -110,6 +99,7 @@ def show_url(id):
 
 @app.post('/urls/<int:id>/checks')
 def create_check(id):
+    conn = db.connect_to_db()
     try:
         dt = datetime.datetime.now()
         cur = conn.cursor()
