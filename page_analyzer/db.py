@@ -27,3 +27,18 @@ def get_queries_for_urls():
     conn.commit()
     cur.close()
     return site
+
+
+def get_queries_for_show_url(id):
+    conn = connect_to_db()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM urls WHERE id=(%s);',
+                (id,))
+    site = cur.fetchone()
+    cur.execute('SELECT * FROM url_checks WHERE url_id = (%s)'
+                'ORDER BY created_at DESC;',
+                (id,))
+    site2 = cur.fetchall()
+    conn.commit()
+    cur.close()
+    return site, site2
