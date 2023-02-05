@@ -18,9 +18,8 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 conn = psycopg2.connect(DATABASE_URL)
-conn.autocommit = True
-app = Flask(__name__)
 
+app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
 
@@ -61,6 +60,7 @@ def create_url():
         cur.execute('SELECT id FROM urls WHERE name=(%s);',
                     (form['url'],))
         id_find = cur.fetchone()
+        conn.commit()
         cur.close()
         flash('Страница успешно добавлена', 'success')
         return redirect(url_for('show_url', id=id_find[0]))
@@ -83,6 +83,7 @@ def get_urls():
                 'GROUP BY urls.id '
                 'ORDER BY urls.id ASC')
     site = cur.fetchall()
+    conn.commit()
     cur.close()
     return render_template('urls.html',
                            site=site
@@ -99,6 +100,7 @@ def show_url(id):
                 'ORDER BY created_at DESC;',
                 (id,))
     site2 = cur.fetchall()
+    conn.commit()
     cur.close()
     return render_template('show_url.html',
                            site=site,
@@ -130,6 +132,7 @@ def create_check(id):
                     'created_at, status_code, h1, description, title) '
                     'VALUES ((%s), (%s), (%s), (%s), (%s), (%s));',
                     (id, dt, code, tag['h1'], tag['meta'], tag['title']))
+        conn.commit()
         cur.close()
         flash('Страница успешно проверена', 'success')
         return redirect(url_for('show_url', id=id))
